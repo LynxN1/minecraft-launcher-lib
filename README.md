@@ -22,7 +22,6 @@ I've created a Discord server for anyone who needs to get in contact with me or 
 ### Standard Example
 ```javascript
 const { Client, Authenticator } = require('minecraft-launcher-core');
-const launcher = new Client();
 
 let opts = {
     // For production launchers, I recommend not passing 
@@ -41,7 +40,9 @@ let opts = {
     }
 }
 
-launcher.launch(opts);
+const launcher = new Client(opts);
+
+launcher.launch();
 
 launcher.on('debug', (e) => console.log(e));
 launcher.on('data', (e) => console.log(e));
