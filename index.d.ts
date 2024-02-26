@@ -228,6 +228,14 @@ declare module "minecraft-launcher-core" {
      * Path of json cache.
      */
     cache?: string;
+    /**
+     * If true, library checksum will be verified
+     */
+    verifyLibraries?: boolean;
+    /**
+     * If true, checking and downloading assets will be skipped
+     */
+    skipAssets?: boolean;
   }
 
   interface IUser {
@@ -294,7 +302,13 @@ declare module "minecraft-launcher-core" {
   import { EventEmitter } from 'events'
   import { ChildProcessWithoutNullStreams } from 'child_process'
 
+  export class Handler {
+    constructor(client: Client);
+    getAssets(): Promise<void>;
+  }
+
   export class Client extends EventEmitter {
+    handler: Handler;
     launch(options: ILauncherOptions): Promise<ChildProcessWithoutNullStreams | null>;
     protected printVersion(): void;
     protected createRootDirectory(): void;
