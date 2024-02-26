@@ -5,41 +5,43 @@ const fs = require('fs')
 const EventEmitter = require('events').EventEmitter
 
 class MCLCore extends EventEmitter {
-  async launch (options) {
-    try {
-      this.options = { ...options }
-      this.options.root = path.resolve(this.options.root)
-      this.options.overrides = {
-        detached: true,
-        ...this.options.overrides,
-        url: {
-          meta: 'https://launchermeta.mojang.com',
-          resource: 'https://resources.download.minecraft.net',
-          mavenForge: 'https://files.minecraftforge.net/maven/',
-          defaultRepoForge: 'https://libraries.minecraft.net/',
-          fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
-          ...this.options.overrides
+  constructor(options) {
+    super();
+    this.options = { ...options }
+    this.options.root = path.resolve(this.options.root)
+    this.options.overrides = {
+      detached: true,
+      ...this.options.overrides,
+      url: {
+        meta: 'https://launchermeta.mojang.com',
+        resource: 'https://resources.download.minecraft.net',
+        mavenForge: 'https://files.minecraftforge.net/maven/',
+        defaultRepoForge: 'https://libraries.minecraft.net/',
+        fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
+        ...this.options.overrides
             ? this.options.overrides.url
             : undefined
-        },
-        fw: {
-          baseUrl: 'https://github.com/ZekerZhayard/ForgeWrapper/releases/download/',
-          version: '1.5.7',
-          sh1: '155ac9f4e5f65288eaacae19025ac4d9da1f0ef2',
-          size: 34910,
-          ...this.options.overrides
+      },
+      fw: {
+        baseUrl: 'https://github.com/ZekerZhayard/ForgeWrapper/releases/download/',
+        version: '1.5.7',
+        sh1: '155ac9f4e5f65288eaacae19025ac4d9da1f0ef2',
+        size: 34910,
+        ...this.options.overrides
             ? this.options.overrides.fw
             : undefined
-        }
       }
+    }
+    this.handler = new Handler(this)
+  }
 
-      this.handler = new Handler(this)
-
+  async launch () {
+    try {
       this.printVersion()
 
       const java = await this.handler.checkJava(this.options.javaPath || 'java')
       if (!java.run) {
-        this.emit('debug', `[MCLC]: Couldn't start Minecraft due to: ${java.message}`)
+        this.emit('error', `[MCLC]: Couldn't start Minecraft due to: ${java.message}`)
         this.emit('close', 1)
         return null
       }
@@ -117,8 +119,10 @@ class MCLCore extends EventEmitter {
       classPaths.push(`${this.options.forge ? this.options.forge + separator : ''}${classes.join(separator)}${jar}`)
       classPaths.push(file.mainClass)
 
-      this.emit('debug', '[MCLC]: Attempting to download assets')
-      await this.handler.getAssets()
+      if (!this.options.skipAssets) {
+        this.emit('debug', '[MCLC]: Attempting to download assets')
+        await this.handler.getAssets()
+      }
 
       // Forge -> Custom -> Vanilla
       const launchOptions = await this.handler.getLaunchOptions(modifyJson)
@@ -129,7 +133,7 @@ class MCLCore extends EventEmitter {
 
       return this.startMinecraft(launchArguments)
     } catch (e) {
-      this.emit('debug', `[MCLC]: Failed to start due to ${e}, closing...`)
+      this.emit('error', `[MCLC]: Failed to start due to ${e}, closing...`)
       return null
     }
   }
