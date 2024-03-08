@@ -305,6 +305,7 @@ declare module "minecraft-launcher-core" {
   export class Handler {
     constructor(client: Client);
     getAssets(): Promise<void>;
+    getNatives(): Promise<void>;
   }
 
   export class Client extends EventEmitter {
